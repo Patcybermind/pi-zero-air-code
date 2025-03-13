@@ -25,16 +25,35 @@ RESET = digitalio.DigitalInOut(board.D22)
 CS.direction = digitalio.Direction.OUTPUT
 RESET.direction = digitalio.Direction.OUTPUT
 
-# wait for spi to be ready
 spi.try_lock()
 
-spi.configure(baudrate=100_00)
+try:
+        spi.configure(baudrate=100_000)  # 1 MHz CHANGED
+        print("SPI frequency set")
+except all:
+        print("not set")
+finally:
+        print("continuing")
+        spi.unlock()
 
-# might need to then do spi.unlock()
+# Initialize RFM radio
+tries = 0
+rfm_connected = False
+while (tries < 100) and rfm_connected == False:
+    try:
+        rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
+        rfm_connected = True
+        print("RFM9x: Detected")
+    except:
+        print("NC")
+        tries += 1
+        time.sleep(0.02)
 
-print("spi done configuring and spi baudrate set")
+if rfm_connected == False:
+    print("RFM9x: Not Detected")
+    exit(1)
 
-rfm9x.tx_power = 8 # change later
+rfm9x.tx_power = 23
 
 sleep_time = 1000
 current_time = 0
